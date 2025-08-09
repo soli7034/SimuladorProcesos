@@ -22,8 +22,9 @@ public class SimuladorProcesos extends JFrame {
     private JTextField campoNombre, campoRAM, campoDuracion;
     private JPanel graficoPanel;
     private JComboBox<Proceso> comboEjecucion, comboEspera;
-    private static int siguientePID = 1;
+    private static int siguientePID = 1; // Contador para generar PIDs automáticamente
 
+    // Variables para el gráfico de JFreeChart
     private DynamicTimeSeriesCollection dataset;
     private JFreeChart chart;
 
@@ -31,80 +32,88 @@ public class SimuladorProcesos extends JFrame {
         ramDisponible = RAM_TOTAL;
         inicializarInterfaz();
         actualizarEstado();
-        iniciarGraficoMemoria();
+        iniciarGraficoMemoria(); // Inicializa el gráfico al arrancar
     }
 
     private void inicializarInterfaz() {
         setTitle("Simulador de Procesos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
-        setSize(1000, 700);
-
-        // 🎨 Color de fondo general
-        getContentPane().setBackground(new Color(240, 248, 255)); // Azul muy claro
+        setSize(1000, 700); // Tamaño para mejor visualización
 
         // Panel de entrada
-        JPanel panelEntrada = new JPanel(new GridLayout(4, 2, 5, 5));
+        JPanel panelEntrada = new JPanel(new GridLayout(4, 2, 5, 5)); // Reducido a 4 filas (sin PID)
         panelEntrada.setBorder(BorderFactory.createTitledBorder("Agregar Proceso"));
-        panelEntrada.setBackground(new Color(255, 250, 240)); // Fondo crema
 
-        panelEntrada.add(new JLabel("Nombre:"));
+        // Cambiar color de etiquetas
+        Color etiquetaColor = new Color(30, 60, 90);
+        JLabel labelNombre = new JLabel("Nombre:");
+        labelNombre.setForeground(etiquetaColor);
+        JLabel labelRAM = new JLabel("RAM (MB):");
+        labelRAM.setForeground(etiquetaColor);
+        JLabel labelDuracion = new JLabel("Duración (s):");
+        labelDuracion.setForeground(etiquetaColor);
+
+        panelEntrada.add(labelNombre);
         campoNombre = new JTextField(10);
         panelEntrada.add(campoNombre);
-
-        panelEntrada.add(new JLabel("RAM (MB):"));
+        panelEntrada.add(labelRAM);
         campoRAM = new JTextField(5);
         panelEntrada.add(campoRAM);
-
-        panelEntrada.add(new JLabel("Duración (s):"));
+        panelEntrada.add(labelDuracion);
         campoDuracion = new JTextField(5);
         panelEntrada.add(campoDuracion);
 
         JButton botonAgregar = new JButton("Agregar Proceso");
-        botonAgregar.setBackground(new Color(144, 238, 144)); // Verde claro
+        botonAgregar.setBackground(new Color(70, 130, 180)); // Steel Blue
+        botonAgregar.setForeground(Color.WHITE);
+        botonAgregar.setFocusPainted(false);
+        botonAgregar.addActionListener(e -> agregarProceso());
         panelEntrada.add(new JLabel());
         panelEntrada.add(botonAgregar);
 
         // Panel de controles
         JPanel panelControles = new JPanel(new FlowLayout());
-        panelControles.setBackground(new Color(230, 230, 250)); // Lavanda
-
         JButton botonDetener = new JButton("Detener Seleccionado");
-        botonDetener.setBackground(new Color(255, 182, 193)); // Rosa claro
+        botonDetener.setBackground(new Color(178, 34, 34)); // Firebrick rojo oscuro
+        botonDetener.setForeground(Color.WHITE);
+        botonDetener.setFocusPainted(false);
         panelControles.add(botonDetener);
 
-        // Panel selección
+        // Panel de selección de procesos
         JPanel panelSeleccion = new JPanel(new GridLayout(2, 2, 10, 10));
         panelSeleccion.setBorder(BorderFactory.createTitledBorder("Selección de Procesos"));
-        panelSeleccion.setBackground(new Color(245, 245, 245));
-
-        panelSeleccion.add(new JLabel("Procesos en Ejecución:"));
+        JLabel labelEjecucion = new JLabel("Procesos en Ejecución:");
+        labelEjecucion.setForeground(etiquetaColor);
+        JLabel labelEspera = new JLabel("Cola de Espera:");
+        labelEspera.setForeground(etiquetaColor);
+        panelSeleccion.add(labelEjecucion);
         comboEjecucion = new JComboBox<>();
         comboEjecucion.setPreferredSize(new Dimension(200, 25));
         panelSeleccion.add(comboEjecucion);
-
-        panelSeleccion.add(new JLabel("Cola de Espera:"));
+        panelSeleccion.add(labelEspera);
         comboEspera = new JComboBox<>();
         comboEspera.setPreferredSize(new Dimension(200, 25));
         panelSeleccion.add(comboEspera);
 
-        // Panel info
+        // Panel de estado y historial
         JPanel panelInfo = new JPanel(new GridLayout(1, 2, 10, 10));
         panelInfo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        panelInfo.setBackground(new Color(240, 255, 240));
 
+        // Estado
         JPanel panelEstado = new JPanel(new BorderLayout());
         panelEstado.setBorder(BorderFactory.createTitledBorder("Estado Actual"));
         areaEstado = new JTextArea(10, 30);
         areaEstado.setEditable(false);
-        areaEstado.setBackground(new Color(230, 255, 230)); // Verde claro
+        areaEstado.setFont(new Font("Consolas", Font.PLAIN, 13)); // Fuente monoespaciada para mejor lectura
         panelEstado.add(new JScrollPane(areaEstado), BorderLayout.CENTER);
 
+        // Historial
         JPanel panelHistorial = new JPanel(new BorderLayout());
         panelHistorial.setBorder(BorderFactory.createTitledBorder("Historial de Procesos"));
         areaHistorial = new JTextArea(10, 30);
         areaHistorial.setEditable(false);
-        areaHistorial.setBackground(new Color(230, 230, 255)); // Azul claro
+        areaHistorial.setFont(new Font("Consolas", Font.PLAIN, 13));
         panelHistorial.add(new JScrollPane(areaHistorial), BorderLayout.CENTER);
 
         panelInfo.add(panelEstado);
@@ -113,11 +122,10 @@ public class SimuladorProcesos extends JFrame {
         // Panel gráfico
         graficoPanel = new JPanel(new BorderLayout());
         graficoPanel.setPreferredSize(new Dimension(400, 300));
-        graficoPanel.setBackground(new Color(245, 245, 245));
+        graficoPanel.setBorder(BorderFactory.createLineBorder(new Color(70, 130, 180), 2)); // borde azul para destacar
 
         // Organizar layout
         JPanel panelCentro = new JPanel(new BorderLayout());
-        panelCentro.setBackground(new Color(255, 255, 255));
         panelCentro.add(panelControles, BorderLayout.NORTH);
         panelCentro.add(panelSeleccion, BorderLayout.CENTER);
         panelCentro.add(panelInfo, BorderLayout.SOUTH);
@@ -126,10 +134,11 @@ public class SimuladorProcesos extends JFrame {
         add(panelCentro, BorderLayout.CENTER);
         add(graficoPanel, BorderLayout.EAST);
 
-        // Acciones
-        botonAgregar.addActionListener(e -> agregarProceso());
+        // Lógica de botones
         botonDetener.addActionListener(e -> detenerProcesoSeleccionado());
     }
+
+    // ... resto del código permanece igual ...
 
     private void agregarProceso() {
         try {

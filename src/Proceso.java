@@ -1,6 +1,6 @@
 public class Proceso {
     enum Estado { ESPERANDO, EJECUTANDO, PAUSADO, TERMINADO }
-    
+
     int pid;
     String nombre;
     int ram;
@@ -33,11 +33,6 @@ public class Proceso {
 
     public int getDuracionRestante() {
         return duracionRestante;
-    }
-
-    // Método opcional para cambiar nombre si lo requieres luego
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
     }
 
     @Override
