@@ -195,6 +195,8 @@ public class SimuladorProcesos extends JFrame {
     }
 
     private void verificarColaEspera() {
+        
+        
         for (int i = 0; i < colaEspera.size(); i++) {
             Proceso proceso = colaEspera.get(i);
             if (proceso.ram <= ramDisponible) {
