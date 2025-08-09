@@ -1,6 +1,6 @@
 public class Proceso {
     enum Estado { ESPERANDO, EJECUTANDO, PAUSADO, TERMINADO }
-
+    
     int pid;
     String nombre;
     int ram;
