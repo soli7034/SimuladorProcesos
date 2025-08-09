@@ -276,6 +276,7 @@ public class SimuladorProcesos extends JFrame {
             dataset.appendData(new float[]{RAM_TOTAL - ramDisponible});
         });
     }
+    
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
